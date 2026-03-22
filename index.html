@@ -2,215 +2,291 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>浦东新区青少年心理健康教育发展中心 - 参观体验数据</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        .header p {
-            opacity: 0.9;
-            font-size: 1rem;
-        }
-        .refresh-info {
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .header p { opacity: 0.9; font-size: 1rem; }
+        .controls {
             display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
             justify-content: center;
-            align-items: center;
-            gap: 20px;
-            color: white;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
         }
-        .download-btn {
+        .date-selector { flex: 2; min-width: 200px; }
+        .date-selector label { display: block; font-weight: 600; margin-bottom: 5px; color: white; }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        select { background: white; }
+        button {
             background: white;
             color: #667eea;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
             font-weight: 600;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
         }
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        button:hover { transform: translateY(-2px); }
+        .download-btn { background: #28a745; color: white; }
+        .download-btn:hover { background: #218838; }
+        .status {
+            margin: 15px auto;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            max-width: 600px;
         }
+        .status.error { background: #f8d7da; color: #721c24; display: block; }
+        .status.loading { background: #d1ecf1; color: #0c5460; display: block; }
         .table-container {
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
         }
-        .table-wrapper {
-            overflow-x: auto;
-        }
+        .table-wrapper { overflow-x: auto; }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1200px;
+            min-width: 800px;
         }
-        thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        th, td { padding: 14px 12px; text-align: center; font-size: 0.85rem; }
+        th { font-weight: 600; white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid #eee; transition: background 0.2s; }
+        tbody tr:hover { background: #f8f9ff; }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        .warning-normal { color: #10b981; font-weight: 600; }
+        .warning-risk { color: #ef4444; font-weight: 600; }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 0.8rem;
             color: white;
-        }
-        th, td {
-            padding: 14px 12px;
             text-align: center;
-            font-size: 0.85rem;
-        }
-        th {
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        tbody tr {
-            border-bottom: 1px solid #eee;
-            transition: background 0.2s;
-        }
-        tbody tr:hover {
-            background: #f8f9ff;
-        }
-        tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-        tbody tr:nth-child(even):hover {
-            background: #f0f2ff;
-        }
-        .warning-normal {
-            color: #10b981;
-            font-weight: 600;
-        }
-        .warning-risk {
-            color: #ef4444;
-            font-weight: 600;
-        }
-        .loading {
-            text-align: center;
-            padding: 60px;
-            color: #666;
-            font-size: 1.1rem;
-        }
-        .error {
-            text-align: center;
-            padding: 60px;
-            color: #ef4444;
+            opacity: 0.7;
         }
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            th, td {
-                padding: 10px 8px;
-                font-size: 0.75rem;
-            }
+            .controls { flex-direction: column; align-items: stretch; }
+            button { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>浦东新区青少年心理健康教育发展中心</h1>
-            <p>参观体验多模态数据记录表</p>
+<div class="container">
+    <div class="header">
+        <h1>浦东新区青少年心理健康教育发展中心</h1>
+        <p>参观体验多模态数据记录表</p>
+    </div>
+    <div class="controls">
+        <div class="date-selector">
+            <label>📅 选择数据日期</label>
+            <select id="dateSelect" disabled>
+                <option value="">-- 加载数据列表 --</option>
+            </select>
         </div>
-        <div class="refresh-info">
-            <span>📊 数据每次刷新页面自动加载最新内容</span>
-            <a href="./最终结果.xlsx" download class="download-btn">📥 下载Excel表格</a>
-        </div>
-        <div class="table-container">
-            <div class="table-wrapper" id="table-wrapper">
-                <div class="loading">正在加载数据...</div>
-            </div>
-        </div>
+        <button id="loadBtn" disabled>📈 加载数据</button>
+        <button id="downloadBtn" class="download-btn" disabled>⬇️ 下载 CSV</button>
     </div>
 
-    <script>
-        async function loadExcel() {
-            const wrapper = document.getElementById('table-wrapper');
-            
-            try {
-                const response = await fetch('./最终结果.xlsx');
-                if (!response.ok) throw new Error('无法加载数据文件');
-                
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                if (jsonData.length < 2) {
-                    wrapper.innerHTML = '<div class="error">数据为空</div>';
-                    return;
-                }
-                
-                const headers = jsonData[1];
-                const dataRows = jsonData.slice(2);
-                
-                let tableHtml = '<table><thead><tr>';
-                
-                headers.forEach((header, index) => {
-                    if (header && header.trim()) {
-                        tableHtml += `<th>${header}</th>`;
-                    }
-                });
-                tableHtml += '</tr></thead><tbody>';
-                
-                dataRows.forEach(row => {
-                    if (!row || row.length === 0) return;
-                    
-                    tableHtml += '<tr>';
-                    headers.forEach((header, index) => {
-                        let value = row[index];
-                        
-                        if (header === '预警') {
-                            const cls = value === '风险' ? 'warning-risk' : 'warning-normal';
-                            tableHtml += `<td><span class="${cls}">${value || '-'}</span></td>`;
-                        } else {
-                            tableHtml += `<td>${value || '-'}</td>`;
-                        }
-                    });
-                    tableHtml += '</tr>';
-                });
-                
-                tableHtml += '</tbody></table>';
-                wrapper.innerHTML = tableHtml;
-                
-            } catch (error) {
-                console.error(error);
-                wrapper.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+    <div id="statusMsg" class="status"></div>
+    <div class="table-container">
+        <div class="table-wrapper" id="tableWrapper">
+            <div class="loading" style="padding: 60px; text-align: center; color: #666;">正在获取数据列表...</div>
+        </div>
+    </div>
+    <div class="footer-note">
+        💡 数据文件自动从仓库 <code>data/</code> 目录获取，无需手动维护索引。<br>
+        新增 CSV 后稍等片刻刷新页面即可显示。
+    </div>
+</div>
+
+<script>
+    // ========== 请修改为你的 GitHub 仓库信息 ==========
+    const REPO_OWNER = "ACHIFENG";      // 例如 "zhangsan"
+    const REPO_NAME = "shouhuan";       // 例如 "mental-health-data"
+    const BRANCH = "main";               // 通常是 main 或 master
+    // ================================================
+
+    let currentFilePath = '';
+    let availableFiles = [];
+
+    const dateSelect = document.getElementById('dateSelect');
+    const loadBtn = document.getElementById('loadBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusDiv = document.getElementById('statusMsg');
+    const tableWrapper = document.getElementById('tableWrapper');
+
+    function showStatus(message, type = 'loading') {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+    }
+    function hideStatus() {
+        statusDiv.className = 'status';
+        statusDiv.style.display = 'none';
+        statusDiv.textContent = '';
+    }
+
+    // 从 GitHub API 获取 data 目录下所有 CSV 文件
+    async function fetchCSVFiles() {
+        showStatus('正在获取数据文件列表...', 'loading');
+        try {
+            const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data?ref=${BRANCH}`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`GitHub API 请求失败 (${response.status})`);
+            const files = await response.json();
+            const csvFiles = files.filter(file => file.name.endsWith('.csv'));
+            if (csvFiles.length === 0) throw new Error('data 目录下没有 CSV 文件');
+            availableFiles = csvFiles.map(file => {
+                const datePart = file.name.replace('.csv', '');
+                return {
+                    file: file.download_url,
+                    name: file.name,
+                    label: `${datePart} 数据`,
+                    date: datePart
+                };
+            }).sort((a, b) => b.date.localeCompare(a.date));
+            dateSelect.innerHTML = '<option value="">-- 请选择日期 --</option>';
+            availableFiles.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.file;
+                option.textContent = item.label;
+                dateSelect.appendChild(option);
+            });
+            dateSelect.disabled = false;
+            loadBtn.disabled = false;
+            hideStatus();
+            if (availableFiles.length > 0) {
+                dateSelect.value = availableFiles[0].file;
+                loadSelectedData();
+            } else {
+                tableWrapper.innerHTML = '<div class="error">没有找到 CSV 文件</div>';
             }
+        } catch (error) {
+            console.error(error);
+            showStatus(`获取文件列表失败: ${error.message}`, 'error');
+            dateSelect.disabled = true;
+            loadBtn.disabled = true;
+            tableWrapper.innerHTML = '<div class="error">无法加载数据列表，请检查仓库名和分支是否正确，或稍后重试。</div>';
         }
-        
-        loadExcel();
-    </script>
+    }
+
+    async function loadSelectedData() {
+        const selectedUrl = dateSelect.value;
+        if (!selectedUrl) {
+            showStatus('请先选择一个日期', 'error');
+            return;
+        }
+        currentFilePath = selectedUrl;
+        const selectedItem = availableFiles.find(f => f.file === selectedUrl);
+        showStatus(`正在加载 ${selectedItem?.label} 的数据...`, 'loading');
+        tableWrapper.innerHTML = '<div class="loading">加载中...</div>';
+        downloadBtn.disabled = true;
+
+        try {
+            const response = await fetch(selectedUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: 无法加载文件`);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    if (results.errors.length > 0) console.warn('CSV解析警告:', results.errors);
+                    if (results.data.length === 0) {
+                        tableWrapper.innerHTML = '<div class="error">该文件无数据</div>';
+                        showStatus('文件无数据', 'error');
+                        return;
+                    }
+                    renderTable(results.data);
+                    downloadBtn.disabled = false;
+                    hideStatus();
+                },
+                error: (err) => {
+                    throw new Error(`CSV 解析失败: ${err.message}`);
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            showStatus(`数据加载失败: ${error.message}`, 'error');
+            tableWrapper.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            downloadBtn.disabled = true;
+        }
+    }
+
+    function renderTable(dataArray) {
+        if (!dataArray || dataArray.length === 0) {
+            tableWrapper.innerHTML = '<div class="error">没有数据可显示</div>';
+            return;
+        }
+        const headers = Object.keys(dataArray[0]);
+        let html = ' <thead> proizv';
+        headers.forEach(header => {
+            html += `<th>${escapeHtml(header)}</th>`;
+        });
+        html += '</thead><tbody>';
+        dataArray.forEach(row => {
+            html += '械';
+            headers.forEach(header => {
+                let cellValue = row[header] !== undefined && row[header] !== null ? row[header] : '';
+                if (header === '预警') {
+                    const cls = cellValue === '风险' ? 'warning-risk' : 'warning-normal';
+                    html += `<td><span class="${cls}">${escapeHtml(String(cellValue))}</span></td>`;
+                } else {
+                    html += `<td>${escapeHtml(String(cellValue))}</td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        tableWrapper.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function downloadCurrentCSV() {
+        if (!currentFilePath) {
+            alert('没有可下载的数据');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = currentFilePath;
+        const fileName = currentFilePath.split('/').pop();
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    loadBtn.addEventListener('click', loadSelectedData);
+    downloadBtn.addEventListener('click', downloadCurrentCSV);
+    fetchCSVFiles();
+</script>
 </body>
 </html>
