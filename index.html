@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浦东新区青少年心理健康教育发展中心 - 参观体验数据</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 28px; }
+        .header h1 { font-size: 1.9rem; margin-bottom: 8px; text-shadow: 2px 2px 6px rgba(0,0,0,0.25); }
+        .header p { opacity: 0.88; font-size: 1rem; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 22px;
+            background: rgba(255,255,255,0.18);
+            padding: 16px 20px;
+            border-radius: 14px;
+            backdrop-filter: blur(8px);
+        }
+        .ctrl-group { display: flex; flex-direction: column; gap: 5px; min-width: 200px; flex: 1; }
+        .ctrl-group label { font-size: 0.85rem; font-weight: 600; color: white; }
+        select { padding: 10px 12px; border: none; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer; width: 100%; }
+        select:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+            align-self: flex-end;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-load { background: white; color: #667eea; }
+        .btn-dl { background: #10b981; color: white; }
+
+        .status { text-align: center; padding: 12px 20px; border-radius: 10px; margin-bottom: 16px; font-size: 0.92rem; display: none; }
+        .status.loading { background: #dbeafe; color: #1e40af; display: block; }
+        .status.error { background: #fee2e2; color: #991b1b; display: block; }
+
+.stats-bar { display: none; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+.stats-bar.show { display: flex; }
+.stat-card { background: rgba(255,255,255,0.22); color: white; border-radius: 10px; padding: 10px 22px; text-align: center; backdrop-filter: blur(6px); }
+.stat-card .num { font-size: 1.5rem; font-weight: 700; }
+.stat-card .lbl { font-size: 0.75rem; opacity: 0.85; margin-top: 2px; }
+.stat-card .num.risk { color: #dc2626; }
+.stat-card .num.normal { color: #10b981; }
+
+.table-container { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.28); overflow: hidden; }
+table { border: 2px solid white; }
+table caption { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    color: white; 
+    font-size: 1.3rem; 
+    font-weight: 700; 
+    padding: 18px 16px; 
+    text-align: center; 
+    border-bottom: 2px solid white;
+}
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        th, td { padding: 13px 12px; text-align: center; font-size: 0.83rem; }
+        th { font-weight: 600; white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid #eef0f5; transition: background 0.18s; }
+        tbody tr:hover { background: #f3f4ff; }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        tbody tr:nth-child(even):hover { background: #ebebff; }
+        .tag-normal { color: #059669; font-weight: 700; }
+        .tag-risk { color: #dc2626; font-weight: 700; }
+        .placeholder { padding: 60px 20px; text-align: center; color: #9ca3af; font-size: 1rem; }
+        
+        .footer { margin-top: 18px; text-align: center; color: rgba(255,255,255,0.65); font-size: 0.8rem; line-height: 1.8; }
+        @media (max-width: 680px) { .header h1 { font-size: 1.35rem; } .controls { flex-direction: column; } .btn { width: 100%; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>浦东新区青少年心理健康教育发展中心</h1>
+        <p>参观体验多模态数据记录表</p>
+    </div>
+
+    <div class="controls">
+        <div class="ctrl-group">
+            <label>📅 选择体验日期</label>
+            <select id="dateSelect">
+                <option value="">— 请选择日期 —</option>
+            </select>
+        </div>
+        <button class="btn btn-load" id="loadBtn" disabled>📊 查看数据</button>
+        <button class="btn btn-dl" id="dlBtn" disabled>⬇️ 下载 CSV</button>
+    </div>
+
+    <div class="status" id="statusBar"></div>
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card"><div class="num" id="statTotal">-</div><div class="lbl">参与总人数</div></div>
+        <div class="stat-card"><div class="num" id="statNormal">-</div><div class="lbl">状态正常</div></div>
+        <div class="stat-card"><div class="num" id="statRisk">-</div><div class="lbl">需关注</div></div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-wrapper" id="tableWrapper">
+            <div class="placeholder">请选择日期后点击「查看数据」</div>
+        </div>
+    </div>
+
+    <div class="footer">数据自动从仓库 <code>data/</code> 目录读取 · 上传新的 CSV 文件后刷新页面即可更新</div>
+</div>
+
+<script>
+const OWNER = "ACHIFENG";
+const REPO = "shouhuan";
+const BRANCH = "main";
+
+const dateSelect = document.getElementById('dateSelect');
+const loadBtn = document.getElementById('loadBtn');
+const dlBtn = document.getElementById('dlBtn');
+const statusBar = document.getElementById('statusBar');
+const statsBar = document.getElementById('statsBar');
+const tableWrapper = document.getElementById('tableWrapper');
+
+let currentDownloadUrl = '';
+let currentFileName = '';
+
+function showStatus(msg, type) { statusBar.textContent = msg; statusBar.className = `status ${type}`; }
+function clearStatus() { statusBar.className = 'status'; }
+
+// 初始化：获取文件列表
+async function initDateList() {
+    try {
+        const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/data?ref=${BRANCH}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error(`GitHub API 错误 (${res.status})`);
+        const files = await res.json();
+        
+        const csvFiles = files
+            .filter(f => f.type === 'file' && f.name.toLowerCase().endsWith('.csv'))
+            .sort((a, b) => b.name.localeCompare(a.name));
+
+        if (csvFiles.length === 0) {
+            showStatus('data/ 目录下暂无 CSV 文件，请先上传数据。', 'error');
+            return;
+        }
+
+        // 默认显示为空，让用户选择
+        dateSelect.innerHTML = '<option value="">— 请选择日期 —</option>';
+        csvFiles.forEach(f => {
+            const label = f.name.replace('.csv', '');
+            const opt = document.createElement('option');
+            opt.value = f.download_url;
+            opt.dataset.name = f.name;
+            opt.textContent = label;
+            dateSelect.appendChild(opt);
+        });
+
+        dateSelect.disabled = false;
+    } catch (err) {
+        showStatus(`无法读取文件列表：${err.message}`, 'error');
+    }
+}
+
+// 加载数据
+async function loadData() {
+    const url = dateSelect.value;
+    const name = dateSelect.selectedOptions[0]?.dataset?.name || '';
+    if (!url) { showStatus('请先选择一个日期。', 'error'); return; }
+
+    currentDownloadUrl = url;
+    currentFileName = name;
+    dlBtn.disabled = true;
+    statsBar.classList.remove('show');
+    tableWrapper.innerHTML = '<div class="placeholder">加载中，请稍候…</div>';
+    showStatus('正在加载数据…', 'loading');
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`文件请求失败 (${res.status})`);
+        
+        // 获取ArrayBuffer并自动检测编码
+        const buffer = await res.arrayBuffer();
+        const uint8 = new Uint8Array(buffer);
+        
+        let csvText = '';
+        // 检查是否有UTF-8 BOM
+        if (uint8[0] === 0xEF && uint8[1] === 0xBB && uint8[2] === 0xBF) {
+            csvText = new TextDecoder('utf-8').decode(uint8.slice(3));
+        } else {
+            // 尝试UTF-8解码
+            try {
+                csvText = new TextDecoder('utf-8', { fatal: true }).decode(uint8);
+            } catch {
+                // UTF-8失败，尝试GBK
+                try {
+                    csvText = new TextDecoder('gbk').decode(uint8);
+                } catch {
+                    // GBK失败，尝试GB18030
+                    csvText = new TextDecoder('gb18030').decode(uint8);
+                }
+            }
+        }
+
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete(result) {
+                if (result.errors.length) console.warn('CSV解析警告:', result.errors);
+                
+                // 检查是否需要跳过第一行（标题行）
+                let data = result.data;
+                if (data.length > 0) {
+                    const firstRow = data[0];
+                    const firstKeys = Object.keys(firstRow);
+                    // 如果第一行列名包含"浦东"等关键词，说明是标题行，需要跳过
+                    const firstValues = Object.values(firstRow).join('');
+                    if (firstValues.includes('浦东') || firstValues.includes('参观') || firstValues.includes('体验')) {
+                        data = data.slice(1); // 跳过第一行
+                    }
+                }
+                
+                if (!data.length) {
+                    showStatus('该文件暂无数据行。', 'error');
+                    tableWrapper.innerHTML = '<div class="placeholder">文件中没有数据</div>';
+                    return;
+                }
+                renderTable(data);
+                renderStats(data);
+                dlBtn.disabled = false;
+                clearStatus();
+            },
+            error(err) { throw new Error(`CSV解析失败：${err.message}`); }
+        });
+    } catch (err) {
+        showStatus(`加载失败：${err.message}`, 'error');
+        tableWrapper.innerHTML = '<div class="placeholder">数据加载出错，请重试。</div>';
+    }
+}
+
+// 渲染表格
+function renderTable(rows) {
+    const headers = Object.keys(rows[0]);
+    const displayHeaders = ['体验日期', '编号', '姓名', '性别', '预警', '开始时间', '情绪类型', '效价', '唤醒度', '平均心率', '平均动脉压', '活动主区域', '停留时长'];
+    // 只取前13个数据列，避免多余的空列
+    const dataHeaders = headers.slice(0, 13);
+    let html = `<table><caption>浦东新区青少年心理健康教育发展中心参观体验多模态数据记录表</caption><thead><tr>`;
+    displayHeaders.forEach(h => { html += `<th>${esc(h)}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    rows.forEach(row => {
+        html += '<tr>';
+        dataHeaders.forEach((h, i) => {
+            const val = row[h] ?? '';
+            if (displayHeaders[i] === '预警') {
+                const cls = val === '风险' ? 'tag-risk' : 'tag-normal';
+                html += `<td><span class="${cls}">${esc(val)}</span></td>`;
+            } else {
+                html += `<td>${esc(String(val))}</td>`;
+            }
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    tableWrapper.innerHTML = html;
+}
+
+// 渲染统计
+function renderStats(rows) {
+    // 过滤有效数据行：有体验日期的行
+    const validRows = rows.filter(r => {
+        const date = r['体验日期'] ?? Object.values(r)[0];
+        return date && date.trim() !== '';
+    });
+    const total = validRows.length;
+    // 预警列
+    const getWarning = (r) => r['预警'] ?? Object.values(r)[4];
+    const risk = validRows.filter(r => getWarning(r) === '风险').length;
+    const normal = total - risk;
+
+    document.getElementById('statTotal').textContent = total;
+    const statNormalEl = document.getElementById('statNormal');
+    statNormalEl.textContent = normal;
+    if (normal > 0) statNormalEl.classList.add('normal');
+    else statNormalEl.classList.remove('normal');
+    const statRiskEl = document.getElementById('statRisk');
+    statRiskEl.textContent = risk;
+    if (risk > 0) statRiskEl.classList.add('risk');
+    else statRiskEl.classList.remove('risk');
+    statsBar.classList.add('show');
+}
+
+// 下载CSV
+function downloadCSV() {
+    if (!currentDownloadUrl) return;
+    const a = document.createElement('a');
+    a.href = currentDownloadUrl;
+    a.download = currentFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// 事件
+dateSelect.addEventListener('change', function() {
+    loadBtn.disabled = !this.value;
+    dlBtn.disabled = true;
+    statsBar.classList.remove('show');
+    if (!this.value) {
+        tableWrapper.innerHTML = '<div class="placeholder">请选择日期后点击「查看数据」</div>';
+    }
+});
+loadBtn.addEventListener('click', loadData);
+dlBtn.addEventListener('click', downloadCSV);
+
+function esc(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+initDateList();
+</script>
+</body>
+</html>
